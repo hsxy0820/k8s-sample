@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    component: k12webtest
+  name: k12webtest-pod
+  namespace: micro
+spec:
+  containers:
+  - image: nginx:1.15.12
+    imagePullPolicy: IfNotPresent
+    name: k12webtest
+    ports:
+    - containerPort: 443
+      hostPort: 443
+    volumeMounts:
+    #- mountPath: /www
+    #  name: k12webtest-static-vol
+    - mountPath: /etc/nginx/conf.d
+      name: k12webtest-config-vol
+  volumes:
+  #- name: k12webtest-static-vol
+  #  hostPath:
+  #    path: /home/ubuntu/k12/k12web/dist
+  - name: k12webtest-config-vol
+    hostPath:
+      path: /home/ubuntu/k12/k12web/config
+  nodeName: microweb

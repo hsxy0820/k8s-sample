@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    component: k12mgr
+  name: k12mgr-pod
+  namespace: k12
+spec:
+  containers:
+    - image: nginx:1.15.12
+      imagePullPolicy: IfNotPresent
+      name: k12mgr
+      ports:
+        - containerPort: 8080
+          hostPort: 8080
+      volumeMounts:
+        - mountPath: /www
+          name: k12mgr-static-vol
+        - mountPath: /etc/nginx/conf.d
+          name: k12mgr-config-vol
+  volumes:
+    - name: k12webtest-static-vol
+      hostPath:
+        path: /root/k12mgr/dist
+    - name: k12mgr-config-vol
+      hostPath:
+        path: /root/k12mgr/config
+  nodeName: cn-shanghai.192.168.0.216

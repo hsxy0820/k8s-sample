@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: filer
+  namespace: k12 
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: filer
+  serviceName: filer
+  template:
+    metadata:
+      labels:
+        app: filer
+    spec:
+      containers:
+      - name: filer
+        args:
+        - filer
+        - -master=seaweed:9333
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        image: chrislusf/seaweedfs
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: data
+          mountPath: "/data/filerldb2"
+        ports:
+        - containerPort: 8080
+          name: http-port
+          protocol: TCP
+        - containerPort: 18080
+          name: grpc-port
+          protocol: TCP
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pvc-filer
+      restartPolicy: Always

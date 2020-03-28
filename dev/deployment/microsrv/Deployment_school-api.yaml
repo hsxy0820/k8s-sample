@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: school-api
+  name: school-api-deployment
+  namespace: micro
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: school-api
+  template:
+    metadata:
+      labels:
+        app: school-api
+    spec:
+      containers:
+        - image: registry.cn-shanghai.aliyuncs.com/hikedu-k12/k12-school-api:develop
+          imagePullPolicy: Always
+          name: school-api
+          env:
+            - name: DB_USER
+              value: root
+            - name: DB_PASS
+              value: zaq12wsx
+            - name: DB_HOST
+              value: mysql.k12.com:4000
+            - name: DB_NAME
+              value: k12
+            - name: REDIS_HOST
+              value: redis.k12.com:6379
+            - name: REDIS_PASS
+              value: zaq12wsx
+            - name: REDIS_DB
+              value: "0"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: Master_Host
+              value: seaweed:9333
+            - name: File_Host
+              value: filer:8888
+            - name: QINIU_ACCESSKEY
+              value: hL5IH1HsR62_MSIinGiJmfeqJ9Fl4nMyAU2rrhE0
+            - name: QINIU_SECRETKEY
+              value: AcdkbaLF2HIq42GIcNoJfKNVYfNIRE8xzcke_cyp
+            - name: QINIU_BUCKET
+              value: hikedu-k12-dev
+            - name: QINIU_URL
+              value: http://cdn-dev.k12.hikedu.com/
+          workingDir: /log/school-api/
+          volumeMounts:
+            - name: log
+              mountPath: "/log"
+          command: ["/bin/bash"]
+          args: ["-c","school-api --registry=consul --registry_address=consul:8500 --register_ttl=30 --register_interval=20 1>>/log/school-api/$(POD_NAME).log 2>&1"]
+      volumes:
+        - name: log
+          persistentVolumeClaim:
+            claimName: pvc-log
+      imagePullSecrets:
+        - name: dockerregistrykey
+      restartPolicy: Always

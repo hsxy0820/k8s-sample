@@ -1,0 +1,33 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name:  mysqldump
+  namespace: micro
+spec:
+  jobTemplate:
+    spec:
+      completions: 1
+      backoffLimit: 3
+      template:
+        spec:
+          restartPolicy: Never
+          volumes:
+            - name: mysql-backup
+              persistentVolumeClaim:
+                claimName: pvc-backup
+            - name: local-time
+              hostPath:
+                path: /etc/localtime
+          containers:
+            - name: mysqlbackup
+              image: mysql:5.7.25
+              volumeMounts:
+                - name: local-time
+                  mountPath: /etc/localtime
+                - name: mysql-backup
+                  mountPath: /backup
+              workingDir: /backup/mysql/
+              command: ["/bin/bash"]
+              args: ["-c","mysqldump -uroot -P4000 -pzaq12wsx -h mysql.k12.com --databases k12 >/backup/mysql/k12_$(date +%Y%m%d).sql"]
+# if you want run job on 19:00, please count 19-8=11 in cronjob definition
+  schedule: "0 18 * * *"

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: utils-api
+  name: utils-api-deployment
+  namespace: k12
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: utils-api
+  template:
+    metadata:
+      labels:
+        app: utils-api
+    spec:
+      containers:
+        - image: registry.cn-shanghai.aliyuncs.com/hikedu-k12/k12-utils-api
+          imagePullPolicy: Always
+          name: utils-api
+          env:
+            - name: DB_USER
+              value: k12user
+            - name: DB_PASS
+              value: zaq12wsx!
+            - name: DB_HOST
+              value: k12-prod.mysql.rds.aliyuncs.com:3306
+            - name: DB_NAME
+              value: k12
+            - name: REDIS_HOST
+              value: k12-prod.redis.rds.aliyuncs.com:6379
+            - name: REDIS_PASS
+              value: ZAQ12wsx!
+            - name: REDIS_DB
+              value: "0"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: Master_Host
+              value: seaweed:9333
+            - name: File_Host
+              value: filer:8888
+          workingDir: /log/utils-api/
+          volumeMounts:
+            - name: log
+              mountPath: "/log"
+          command: ["/bin/bash"]
+          args: ["-c","utils-api --registry=consul --registry_address=consul:8500 --register_ttl=30 --register_interval=20 1>>/log/utils-api/$(POD_NAME).log 2>&1"]
+      volumes:
+        - name: log
+          persistentVolumeClaim:
+            claimName: pvc-log
+      imagePullSecrets:
+        - name: dockerregistrykey
+      restartPolicy: Always

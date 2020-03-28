@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: microweb
+  name: microweb-deployment
+  #annotations:
+  #  "sidecar.jaegertracing.io/inject": "true"
+  namespace: k12
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: microweb
+  template:
+    metadata:
+      labels:
+        app: microweb
+    spec:
+      containers:
+        - image: registry.cn-shanghai.aliyuncs.com/hikedu-k12/k12-micro
+          imagePullPolicy: Always
+          name: microweb
+          env:
+            - name: CORS_ALLOWED_HEADERS
+              value: "Origin,Authorization,Content-Type"
+            - name: CORS_ALLOWED_ORIGINS
+              value: "*"
+            - name: CORS_ALLOWED_METHODS
+              value: "PUT,PATCH,POST,GET,DELETE,OPTIONS"
+            - name: JAEGER_TRACER
+              value: jaeger-agent:6831
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+          workingDir: /log/microweb/
+          volumeMounts:
+            - name: log
+              mountPath: "/log"
+          command: ["/bin/bash"]
+          args: ["-c","/micro --web_address=:8082 --server_name=microweb --registry=consul --registry_address=consul-2.consul:8500 --register_ttl=30 --register_interval=10 web --namespace=hikedu.k12.common.api 1>>/log/microweb/$(POD_NAME).log 2>&1"]
+          ports:
+            - containerPort: 8082
+      volumes:
+        - name: log
+          persistentVolumeClaim:
+            claimName: pvc-log
+      imagePullSecrets:
+        - name: dockerregistrykey

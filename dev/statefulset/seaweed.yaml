@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seaweed 
+  namespace: micro
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: seaweed
+  serviceName: seaweed
+  template:
+    metadata:
+      labels:
+        app: seaweed
+    spec:
+      containers:
+      - args:
+        - master
+        - -port=9333
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        image: chrislusf/seaweedfs
+        imagePullPolicy: IfNotPresent
+        name: seaweed
+        ports:
+        - containerPort: 9333
+          name: http-port
+          protocol: TCP
+        - containerPort: 19333
+          name: grpc-port
+          protocol: TCP
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always

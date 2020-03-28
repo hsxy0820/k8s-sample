@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata: 
+  name: jaeger
+  namespace: micro
+  labels: 
+    app: jaeger
+spec:
+  type: NodePort
+  ports:
+  - port: 16686
+    targetPort: 16686
+    nodePort: 30686
+    protocol: TCP
+    name: http
+  selector:
+    app: jaeger

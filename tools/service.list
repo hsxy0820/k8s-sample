@@ -1,0 +1,13 @@
+organization-api
+organization-srv
+#product-api
+user-api
+user-srv
+menu-api
+menu-srv
+#platform-api
+utils-api
+school-api
+school-srv
+identity-srv
+answer-srv

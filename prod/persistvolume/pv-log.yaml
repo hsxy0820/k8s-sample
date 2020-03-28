@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-log
+  labels:
+    alicloud-pvname: pv-log
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteMany
+  flexVolume:
+    driver: "alicloud/nas"
+    options:
+      server: "364c44947f-pbm78.cn-shanghai.nas.aliyuncs.com"
+      path: "/log"
+      vers: "4.0"

@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: securemicroweb
+  name: securemicroweb-deployment
+  #annotations:
+  #  "sidecar.jaegertracing.io/inject": "true"
+  namespace: k12
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: securemicroweb 
+  template:
+    metadata:
+      labels:
+        app: securemicroweb
+    spec:
+      containers:
+        - image: registry.cn-shanghai.aliyuncs.com/hikedu-k12/k12-micro
+          imagePullPolicy: Always
+          name: securemicroweb
+          env:
+          - name: MICRO_TLS_CERT_FILE
+            value: /certs/ca.crt
+          - name: MICRO_TLS_KEY_FILE
+            value: /certs/ca.key
+          - name: CORS_ALLOWED_HEADERS
+            value: "Origin,Authorization,Content-Type"
+          - name: CORS_ALLOWED_ORIGINS
+            value: "*"
+          - name: CORS_ALLOWED_METHODS
+            value: "PUT,PATCH,POST,GET,DELETE,OPTIONS"
+          - name: JAEGER_TRACER
+            value: jaeger-agent:6831
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          volumeMounts:
+          - name: k12-cert
+            mountPath: "/certs"
+            readOnly: true
+          - name: log
+            mountPath: "/log"
+          workingDir: /log/securemicroweb/
+          command: ["/bin/bash"]
+          args: ["-c","/micro --enable_tls --web_address=:8082 --server_name=securemicroweb --registry=consul --registry_address=consul-1.consul:8500 --register_ttl=30 --register_interval=10 --client_retries=3 web --namespace=hikedu.k12.common.api 1>>/log/securemicroweb/$(POD_NAME).log 2>&1"]
+          ports:
+          - containerPort: 8082
+      imagePullSecrets:
+        - name: dockerregistrykey
+      volumes:
+      - name: k12-cert
+        projected:
+          sources:
+          - secret:
+              name: ca.crt
+          - secret:
+              name: ca.key
+      - name: log
+        persistentVolumeClaim:
+          claimName: pvc-log

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels: 
+    component: swagger
+  name: swagger-pod
+  namespace: micro
+spec: 
+  containers: 
+  - image: swaggerapi/swagger-ui
+    imagePullPolicy: IfNotPresent
+    name: swagger
+    ports:
+    - containerPort: 8080
+      hostPort: 80
+    env:
+    - name: SWAGGER_JSON
+      value: "/docs/swagger.json"
+    volumeMounts:
+    - mountPath: /docs
+      name: swagger-vol
+  volumes:
+  - name: swagger-vol
+    hostPath:
+      path: /home/ubuntu/k12/HIBL/docs
+  nodeName: microweb

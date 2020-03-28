@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seaweedvol 
+  namespace: micro
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: seaweedvol
+  template:
+    metadata:
+      labels:
+        app: seaweedvol
+    spec:
+      containers:
+      - args:
+        - volume
+        - -mserver=seaweed:9333
+        - -port=8080
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        image: chrislusf/seaweedfs
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: data
+            mountPath: "/data"
+        name: seaweedvol
+        ports:
+        - containerPort: 8080
+          name: http-port
+          protocol: TCP
+        - containerPort: 18080
+          name: grpc-port
+          protocol: TCP
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pvc-seaweedvol
+      restartPolicy: Always
